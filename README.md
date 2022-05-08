@@ -30,7 +30,7 @@ PC:
 - Connect the phone via USB
 - The internal storage is now available over MTP from the PC
 - Copy the downloaded files to the internal storage of the phone
-- Note: if you are having with mtp, run the following command from the folder containig the droidian zip `adb push  droidian-rootfs-api28gsi-arm64*.zip /data/ droidian-rootfs-api28gsi-arm64 && adb push  fw_violet_miui_VIOLET_9.9.3*.zip /data/fw_violet_miui_VIOLET_9.9.3*.zip `
+- Note: if you are having trouble with mtp, run the following command from the folder containig the droidian zip `adb push  droidian-rootfs-api28gsi-arm64*.zip /data/ droidian-rootfs-api28gsi-arm64 && adb push  fw_violet_miui_VIOLET_9.9.3*.zip /data/fw_violet_miui_VIOLET_9.9.3*.zip `
 
 - Install firmware zip file
 - Install zip file: `droidian-rootfs-api28gsi_arm64_YYYYMMDD.zip` 
