@@ -40,9 +40,33 @@ Note: if you are having trouble with mtp, run the following command from the fol
 - Install firmware zip file
 - Install zip file: `droidian-rootfs-api28gsi_arm64_YYYYMMDD.zip` 
 - Install zip file: `droidian-devtools_arm64_YYYYMMDD.zip`(if you are not using nightly)
+- install zip file: `droidian-recovery-flashing-adaptation-violet.zip`
 
-### 3.Untill adaption packages are available we need  a fix for droidian to boot
+and reboot 
+
+- The first boot may take longer, and at least one spontaneous reboot is expected during the process
+- If all goes well, your phone will boot to the Droidian lock screen, the unlock code is `1234`
+- Installation is complete we can see droidian lock screen now 
+
+## Notes
+### Porting status
+testing ...
+### Applications
+You can find a list of mobile-friendly Linux applications at [LinuxPhoneApps](https://linuxphoneapps.org/)
+
+### Update to bookworm
+You can upgrade to the latest `bookworm` version of Droidian **after** doing all available updates from the `Software` application. Run this on the device itself:
+```
+sudo apt install droidian-upgrade-bookworm
+sudo apt update
+sudo apt upgrade
+sudo apt update
+sudo apt dist-upgrade
+sudo apt clean
+systemctl reboot
+```
 `
+### if you like to review the adaptation package or something were to fail make changes manually 
 #### Disable crashing services
 - on pc open terminal 
 - conncet to recovery by running `adb shell`
@@ -78,28 +102,6 @@ DEVICE=violet # replace with your device codename
 cat /var/lib/lxc/android/rootfs/ueventd*.rc /vendor/ueventd*.rc | grep ^/dev | sed -e 's/^\/dev\///' | awk '{printf "ACTION==\"add\", KERNEL==\"%s\", OWNER=\"%s\", GROUP=\"%s\", MODE=\"%s\"\n",$1,$3,$4,$2}' | sed -e 's/\r//' >/etc/udev/rules.d/70-$DEVICE.rules
 ```
 and reboot 
-
-- The first boot may take longer, and at least one spontaneous reboot is expected during the process
-- If all goes well, your phone will boot to the Droidian lock screen, the unlock code is `1234`
-- Installation is complete we can see droidian lock screen now 
-
-## Notes
-### Porting status
-testing ...
-### Applications
-You can find a list of mobile-friendly Linux applications at [LinuxPhoneApps](https://linuxphoneapps.org/)
-
-### Update to bookworm
-You can upgrade to the latest `bookworm` version of Droidian **after** doing all available updates from the `Software` application. Run this on the device itself:
-```
-sudo apt install droidian-upgrade-bookworm
-sudo apt update
-sudo apt upgrade
-sudo apt update
-sudo apt dist-upgrade
-sudo apt clean
-systemctl reboot
-```
 
 ### wifi 
 connect device to pc then `ssh droidian@10.15.19.82`
