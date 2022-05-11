@@ -10,7 +10,7 @@ A collection of tips on how to install and use Droidian on the Xiaomi Redmi note
 ## Installation
 ### 0. Download files
 - [Droidian `rootfs` and `devtools`](https://github.com/droidian-images/rootfs-api28gsi-all/releases) for `arm64` (nightly releases include devtools)
-- [Adaptation](https://github.com/mathew-dennis/droidian-recovery-flashing-adaptation-violet/releases/tag/v1.0)
+- [Adaptation](https://github.com/mathew-dennis/droidian-recovery-flashing-adaptation-violet/releases/tag/v1.1)
 - [Android 9 Pie Firmware](https://xiaomifirmwareupdater.com/firmware/violet/weekly/9.9.3/)
 - [Android 9 vendor](https://github.com/ubuntu-touch-violet/ubuntu-touch-violet/releases/tag/20210510)
 - [Halium-boot](https://gitlab.com/mathew-dennis/xiaomi-violet/-/jobs/2428049402/artifacts/file/out/boot.img)
