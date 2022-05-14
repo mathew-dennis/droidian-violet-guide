@@ -5,10 +5,13 @@ echo " "
 #set device varible 
 device=violet
 
+#load device data
+./data-loader.sh
+
 echo "would you like to dual boot Droidian along with ubuntu-touch / android (yes or no )"
 echo " "
-echo "if your device is non- a/b (old but has treble) this will flash droidians boot image to your recovey .so booting in to recovery will be booting droidian .to get recovery you will have to reflash recovery using 'fastboot flash recovery recovery.img "
-echo "if your device is a/b (a relatviely newer device) this will write droidian to one of the partisions"
+echo "if your device is non- a/b (old but has treble) this will flash droidian's boot image to your recovery partition .so booting into recovery will be booting droidian .to get recovery you will have to reflash recovery using 'fastboot flash recovery recovery.img' "
+echo "if your device is a/b (a relatviely newer device) this will write droidian to one of the partitions"
 echo " "
 echo "this is experimental enter 'no' if you dont want to take the risk "
 
@@ -40,10 +43,10 @@ else
 fi
 
 #download adaption
-wget https://github.com/mathew-dennis/droidian-recovery-flashing-adaptation-violet/releases/download/v1.1/droidian-recovery-flashing-adaptation-violet.zip
+wget $adaptation_url
 
 
-# moving to a device specific folder as the user might like to install droidian on multiple devices
+# moving to a device specific directory. as, the user might like to install droidian on multiple devices
 mkdir $device
 cd $device
 
@@ -52,11 +55,10 @@ if [ -e vendor.img ]
 then
     # maybe check hash
 else 
-   wget https://github.com/ubuntu-touch-violet/ubuntu-touch-violet/releases/download/20210510/vendor.zip
-fi 
+   wget $vendor_url
 
 #download halium boot
-wget  https://gitlab.com/mathew-dennis/xiaomi-violet/-/jobs/2428049402/artifacts/file/out/boot.img
+wget  $boot_url
 
 
 # download recovery 
@@ -64,17 +66,30 @@ if [ -e recovery.img ]
 then
     # maybe check hash
 else 
-   wget https://us-dl.orangefox.download/61c249bef2082f874065b8a5
-   uzip OrangeFox-violet-stable@R11.1_1.zip
+   wget recovery_url
+fi 
+
+
+# download firmware  
+if [ -e firmware.zip ]
+then
+    # maybe check hash
+else 
+   wget firmware_url
 fi 
 #----------------------------------------------------------
-#device specific stuff
+#device specific stuff (violet)
+
+#fix me : we need to move this part as well to data-loader script 
 
 #unzip recovery 
 uzip OrangeFox-violet-stable@R11.1_1.zip
 
 #unzip vendor 
-unzip vendor 
+unzip vendor.zip
+
+#rename firmware
+cp fw_violet_miui_VIOLETINGlobal_V11.0.5.0.*.zip firmware.zip
 
 #----------------------------------------------------------
 
@@ -96,9 +111,9 @@ cd ..
 
 #fix me ..we need a method to check if adb device is connected and the device is $device and continue
 
-echo "the device will reboot to recovery.."
-wait 1
-read -p "please press enter when device is in recovery"
+echo "the device will now reboot to recovery.."
+sleep 3
+read -p "please press 'enter' when device is in recovery"
 
 adb sideload droidian-rootfs-api28gsi-arm64*.zip
 
