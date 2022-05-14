@@ -21,31 +21,34 @@ echo "if your device is a/b (a relatviely newer device) this will write droidian
 echo " "
 echo "this is experimental please input 'no' if you dont want to take the risk "
 
-read dual-boot
+read dual_boot
 
 
 # downloading rootfs
 
-if [ -e droidian-rootfs-api28gsi-arm64*.zip ]
+if [ -e droidian_rootfs.zip ]
 then
    echo " "
    echo "you have downloaded droidian for a previous install."
    echo "would you like to re-download(please say 'no' if its relatively new )  "
    echo "yes or no"
    echo " "
-   read re-download
+   read re_download
     
-   if [$re-download == yes ]
+   if [ $re_download==yes ]
    then
-      rm -f droidian-rootfs-api28gsi-arm64*.zip
+      rm -f rootfs.zip droidian_rootfs.zip
       wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
+      mv rootfs.zip droidian_rootfs.zip
    else
       echo "complete "
    fi
     
 else
+   rm -f rootfs.zip
    echo "downloading"
    wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
+   mv rootfs.zip droidian_rootfs.zip
 fi
 
 #download adaption
@@ -105,7 +108,7 @@ cp fw_violet_miui_VIOLETINGlobal_V11.0.5.0.*.zip firmware.zip
 echo "installing droidian.."
 echo"please boot your device to fastboot mode by pressing vol- and power button at the same time"
 
-if [ $device == violet ]
+if [ $device==violet ]
 then
    fastboot flash recovery recovery.img && fastboot reboot
 else
@@ -122,7 +125,7 @@ echo "the device will now reboot to recovery.."
 sleep 3
 read -p "please press 'enter' when device is in recovery"
 
-adb sideload droidian-rootfs-api28gsi-arm64*.zip
+adb sideload droidian-rootfs.zip
 
 
 adb sideload droidian-recovery-flashing-adaptation-violet.zip
@@ -134,7 +137,7 @@ cd $device
 
 #fix me: add dual boot support for a/b device
 
-if [$dual-boot == yes ]
+if [$dual_boot==yes ]
 then
    if [ -e vendor.img ]
    then
