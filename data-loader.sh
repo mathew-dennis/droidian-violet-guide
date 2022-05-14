@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-if [$device == violet]
+if [ $device==violet ]
 then
     adaptation_url=https://github.com/mathew-dennis/droidian-recovery-flashing-adaptation-violet/releases/download/v1.1/droidian-recovery-flashing-adaptation-violet.zip
     
