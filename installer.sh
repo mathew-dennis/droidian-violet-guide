@@ -137,7 +137,7 @@ cd $device
 
 #fix me: add dual boot support for a/b device
 
-if [$dual_boot==yes ]
+if [ $dual_boot==yes ]
 then
    if [ -e vendor.img ]
    then
