@@ -1,21 +1,25 @@
 #!/bin/bash 
+# script by mathew dennis  https://github.com/mathew-dennis
 
+clear
 echo " "
-echo "Welcome to Droidian installer for Redmi Note 7 Pro"
+echo "Welcome to Droidian installer"
 echo " "
 
-#set device varible 
+#set device variable 
 device=violet
 
 #load device data
 ./data-loader.sh
+
+echo "please make sure that the following dependencies are installed:  adb fastboot "
 
 echo "would you like to dual boot Droidian along with ubuntu-touch / android (yes or no )"
 echo " "
 echo "if your device is non- a/b (old but has treble) this will flash droidian's boot image to your recovery partition .so booting into recovery will be booting droidian .to get recovery you will have to reflash recovery using 'fastboot flash recovery recovery.img' "
 echo "if your device is a/b (a relatviely newer device) this will write droidian to one of the partitions"
 echo " "
-echo "this is experimental enter 'no' if you dont want to take the risk "
+echo "this is experimental please input 'no' if you dont want to take the risk "
 
 read dual-boot
 
@@ -26,7 +30,7 @@ if [ -e droidian-rootfs-api28gsi-arm64*.zip ]
 then
     echo " "
     echo "you have downloaded droidian for a previous install."
-    echo "would you like to re-download(you say 'no' if its relatively new )  "
+    echo "would you like to re-download(please say 'no' if its relatively new )  "
     echo "yes or no"
     echo " "
     read re-download
@@ -35,6 +39,7 @@ then
     then
         rm -f droidian-rootfs-api28gsi-arm64*.zip
         wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
+    else
         echo "complete "
     fi
     
@@ -99,7 +104,7 @@ cp fw_violet_miui_VIOLETINGlobal_V11.0.5.0.*.zip firmware.zip
 echo "installing droidian.."
 echo"please boot your device to fastboot mode by pressing vol- and power button at the same time"
 
-if [ $device==violet ]
+if [ $device == violet ]
 then
     fastboot flash recovery recovery.img && fastboot reboot
 else
@@ -121,10 +126,12 @@ adb sideload droidian-rootfs-api28gsi-arm64*.zip
 
 adb sideload droidian-recovery-flashing-adaptation-violet.zip
 
-adb reboot fastboot
+adb reboot bootloader
 
 # going to device directory
 cd $device
+
+#fix me: add support for a/b device
 
 if [$dual-boot == yes ]
 then
