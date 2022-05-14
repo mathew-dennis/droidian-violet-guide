@@ -7,7 +7,7 @@ echo "Welcome to Droidian installer"
 echo " "
 
 #set device variable 
-device=violet
+export device=violet
 
 #load device data
 ./data-loader.sh
