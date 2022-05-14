@@ -1,3 +1,5 @@
+#!/bin/bash 
+
 echo " "
 echo "Welcome to Droidian installer for Redmi Note 7 Pro"
 echo " "
