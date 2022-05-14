@@ -28,24 +28,24 @@ read dual-boot
 
 if [ -e droidian-rootfs-api28gsi-arm64*.zip ]
 then
-    echo " "
-    echo "you have downloaded droidian for a previous install."
-    echo "would you like to re-download(please say 'no' if its relatively new )  "
-    echo "yes or no"
-    echo " "
-    read re-download
+   echo " "
+   echo "you have downloaded droidian for a previous install."
+   echo "would you like to re-download(please say 'no' if its relatively new )  "
+   echo "yes or no"
+   echo " "
+   read re-download
     
-    if [$re-download == yes ]
-    then
-        rm -f droidian-rootfs-api28gsi-arm64*.zip
-        wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
-    else
-        echo "complete "
-    fi
+   if [$re-download == yes ]
+   then
+      rm -f droidian-rootfs-api28gsi-arm64*.zip
+      wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
+   else
+      echo "complete "
+   fi
     
 else
-    echo "downloading"
-    wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
+   echo "downloading"
+   wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
 fi
 
 #download adaption
@@ -59,29 +59,30 @@ cd $device
 # download vendor 
 if [ -e vendor.img ]
 then
-    # maybe check hash
+   # maybe check hash
 else 
    wget $vendor_url
+fi
 
 #download halium boot
+rm -f boot.img
 wget  $boot_url
-
 
 # download recovery 
 if [ -e recovery.img ]
 then
-    # maybe check hash
+   # maybe check hash
 else 
-   wget recovery_url
+   wget $recovery_url
 fi 
 
 
 # download firmware  
 if [ -e firmware.zip ]
 then
-    # maybe check hash
+   # maybe check hash
 else 
-   wget firmware_url
+   wget $firmware_url
 fi 
 #----------------------------------------------------------
 #device specific stuff (violet)
@@ -89,7 +90,7 @@ fi
 #fix me : we need to move this part as well to data-loader script 
 
 #unzip recovery 
-uzip OrangeFox-violet-stable@R11.1_1.zip
+unzip OrangeFox-violet-stable@R11.1_1.zip
 
 #unzip vendor 
 unzip vendor.zip
@@ -106,9 +107,9 @@ echo"please boot your device to fastboot mode by pressing vol- and power button 
 
 if [ $device == violet ]
 then
-    fastboot flash recovery recovery.img && fastboot reboot
+   fastboot flash recovery recovery.img && fastboot reboot
 else
-    fastboot boot recovery.img
+   fastboot boot recovery.img
 fi
 
 #jump back to main folder to install droidian
@@ -131,12 +132,20 @@ adb reboot bootloader
 # going to device directory
 cd $device
 
-#fix me: add support for a/b device
+#fix me: add dual boot support for a/b device
 
 if [$dual-boot == yes ]
 then
-    fastboot flash recovery boot.img && fastboot reboot
+   if [ -e vendor.img ]
+   then
+      adb push vendor.img /data/vendor.img
+   fi
+   fastboot flash recovery boot.img && fastboot reboot
 else 
+    if [ -e vendor.img ]
+    then
+       fastboot flash vendor  vendor.img
+    fi
     fastboot flash boot boot.img  && fastboot reboot
     
 echo "all done "
