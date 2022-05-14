@@ -35,7 +35,7 @@ then
    echo " "
    read re_download
     
-   if [ $re_download==yes ]
+   if [ $re_download = yes ]
    then
       rm -f rootfs.zip droidian_rootfs.zip
       wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
@@ -137,7 +137,7 @@ cd $device
 
 #fix me: add dual boot support for a/b device
 
-if [ $dual_boot==yes ]
+if [ $dual_boot = yes ]
 then
    if [ -e vendor.img ]
    then
