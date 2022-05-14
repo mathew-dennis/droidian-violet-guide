@@ -34,14 +34,13 @@ then
     if [$re-download == yes ]
     then
         rm -f droidian-rootfs-api28gsi-arm64*.zip
-        wget https://github.com/droidian-images/rootfs-api28gsi-all/releases/download/nightly/droidian-rootfs-api28gsi-arm64_20220514.zip
-    else
+        wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
         echo "complete "
     fi
     
 else
     echo "downloading"
-    wget https://github.com/droidian-images/rootfs-api28gsi-all/releases/download/nightly/droidian-rootfs-api28gsi-arm64_20220514.zip
+    wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
 fi
 
 #download adaption
