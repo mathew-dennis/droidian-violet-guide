@@ -16,3 +16,69 @@ else
     echo "please add urls for your " $device
     read -p "please re-run the installer after that..."   
 fi
+
+
+#download adaption
+wget $adaptation_url
+
+
+# moving to a device specific directory. as, the user might like to install droidian on multiple devices
+mkdir $device
+cd $device
+
+# download vendor 
+if [ -e vendor.img ]
+then
+   # maybe check hash
+else 
+   wget $vendor_url
+fi
+
+#download halium boot
+rm -f boot.img
+wget  $boot_url
+
+# download recovery 
+if [ -e recovery.img ]
+then
+   # maybe check hash
+else 
+   wget $recovery_url
+fi 
+
+
+# download firmware  
+if [ -e firmware.zip ]
+then
+   # maybe check hash
+else 
+   wget $firmware_url
+fi 
+
+
+#----------------------------------------------------------
+#setting file names for flashing 
+
+#unzip recovery if using orengefox
+unzip OrangeFox*.zip
+
+#rename if using  twrp 
+cp twrp*.img recovery.img
+
+
+#unzip vendor 
+unzip vendor.zip
+
+#rename vendor if vendor has big filename 
+cp vendor*.img vendor.img
+
+#rename adaptation 
+cp *adaptation*.zip adaptation.zip 
+
+#rename firmware
+cp fw_*.zip firmware.zip
+
+#if lineage os itself is given
+cp lineage*.zip lineage.zip
+
+#----------------------------------------------------------

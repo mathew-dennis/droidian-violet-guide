@@ -9,9 +9,6 @@ echo " "
 #set device variable 
 export device=violet
 
-#load device data
-./data-loader.sh
-
 echo "please make sure that the following dependencies are installed:  adb fastboot "
 
 echo "would you like to dual boot Droidian along with ubuntu-touch / android (yes or no )"
@@ -51,64 +48,17 @@ else
    mv rootfs.zip droidian_rootfs.zip
 fi
 
-#download adaption
-wget $adaptation_url
+#load device data
+./data-loader.sh
 
 
-# moving to a device specific directory. as, the user might like to install droidian on multiple devices
-mkdir $device
-cd $device
-
-# download vendor 
-if [ -e vendor.img ]
-then
-   # maybe check hash
-else 
-   wget $vendor_url
-fi
-
-#download halium boot
-rm -f boot.img
-wget  $boot_url
-
-# download recovery 
-if [ -e recovery.img ]
-then
-   # maybe check hash
-else 
-   wget $recovery_url
-fi 
-
-
-# download firmware  
-if [ -e firmware.zip ]
-then
-   # maybe check hash
-else 
-   wget $firmware_url
-fi 
-#----------------------------------------------------------
-#device specific stuff (violet)
-
-#fix me : we need to move this part as well to data-loader script 
-
-#unzip recovery 
-unzip OrangeFox-violet-stable@R11.1_1.zip
-
-#unzip vendor 
-unzip vendor.zip
-
-#rename firmware
-cp fw_violet_miui_VIOLETINGlobal_V11.0.5.0.*.zip firmware.zip
-
-#----------------------------------------------------------
-
-
+# actuall install 
 
 echo "installing droidian.."
 echo"please boot your device to fastboot mode by pressing vol- and power button at the same time"
 
-if [ $device==violet ]
+#condition for devices that cant handle fastboot boot command
+if [ $device = violet ]
 then
    fastboot flash recovery recovery.img && fastboot reboot
 else
@@ -135,6 +85,9 @@ adb reboot bootloader
 # going to device directory
 cd $device
 
+if [ -e vendor.img ]
+then 
+   #flash it 
 #fix me: add dual boot support for a/b device
 
 if [ $dual_boot = yes ]
@@ -149,7 +102,7 @@ else
     then
        fastboot flash vendor  vendor.img
     fi
-    fastboot flash boot boot.img  && fastboot reboot
+    fastboot flash boot boot.img && fastboot flash recovery recovery.img  && fastboot reboot
     
 echo "all done "
     
