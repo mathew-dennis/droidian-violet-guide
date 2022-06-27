@@ -9,7 +9,19 @@ echo " "
 #set device variable 
 export device=violet
 
-echo "please make sure that the following dependencies are installed:  adb fastboot "
+#-----------------------------------------------------------------------------------------------------------------------
+
+# The following component checks for dependencies.
+#This component is pulled from https://stackoverflow.com/questions/33297857/how-to-check-dependency-in-bash-script
+
+echo -n "Checking dependencies... "
+for name in fastboot adb zenity
+do
+  [[ $(which $name 2>/dev/null) ]] || { echo -en "\n$name needs to be installed. Use 'sudo apt-get install $name'";deps=1; }
+done
+[[ $deps -ne 1 ]] && echo "OK" || { echo -en "\nInstall the above and rerun this script\n";exit 1; }
+
+#------------------------------------------------------------------------------------------------------------------------
 
 echo "would you like to dual boot Droidian along with ubuntu-touch / android (yes or no )"
 echo " "
