@@ -6,7 +6,7 @@ echo " "
 echo "Welcome to Droidian installer"
 echo " "
 
-#set device variable ( deprecated as we are using zenity
+#set device variable 
 #export device=violet
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -41,7 +41,6 @@ device=$(zenity --list \
                 True  violet "Redmi note 7 pro" \
                 False kenzo "Redmi note 3"
                 )
-#Todo: load device details dynamically using from json                
        
 echo "you have chosen " $device
 echo "would you like to dual boot Droidian along with ubuntu-touch / android (yes or no )"
@@ -52,35 +51,54 @@ echo " "
 echo "this is experimental please input 'no' if you dont want to take the risk "
 
 
-read dual_boot
+#--------------------------------------------------------------------------------------------------------------
+#the following zenity code is pulled from this link
+#https://askubuntu.com/questions/478186/help-creating-a-messagebox-notification-with-yes-no-options-before-an-applicatio
 
+if zenity --question \
+          --window-icon=logo.png \
+          --width 500 \
+          --height 300 \
+          --text="would you like to dual boot Droidian along with ubuntu-touch / android (yes or no ) \n \n  if your device is non- a/b (old but has treble) this will flash droidian's boot image to your recovery partition .so booting into recovery will be booting droidian .to get recovery you will have to reflash recovery using 'fastboot flash recovery recovery.img'"
+then
+    #zenity --info --text="You pressed \"Yes\"!"
+    dual_boot=yes
+else
+   # zenity --info --text="You pressed \"No\"!"
+    dual_boot=no
+fi
+echo "Your choice for dual boot is" $dual_boot
+
+#depricated as we use zenity
+#read dual_boot
+#------------------------------------------------------------------------------------------------------------------
 
 # downloading rootfs
 
 if [ -e droidian_rootfs.zip ]
 then
-   echo " "
-   echo "you have downloaded droidian for a previous install."
-   echo "would you like to re-download(please say 'no' if its relatively new )  "
-   echo "yes or no"
-   echo " "
-   read re_download
-    
-   if [ $re_download = yes ]
+   if zenity --question \
+             --window-icon=logo.png \
+             --width 500 \
+             --height 300 \
+             --text=" droidian rootfs exists ,would you like to re-download " 
+   # zenity will return true or false based on user responce ...
    then
+      echo "re-downloading rootfs"
       rm -f rootfs.zip droidian_rootfs.zip
       wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
       mv rootfs.zip droidian_rootfs.zip
    else
-      echo "complete "
+      echo "skipping re-download.. "
    fi
     
 else
    rm -f rootfs.zip
-   echo "downloading"
+   echo "downloading rootfs"
    wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
    mv rootfs.zip droidian_rootfs.zip
 fi
+
 
 #load device data
 ./data-loader.sh
