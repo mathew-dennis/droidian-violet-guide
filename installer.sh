@@ -6,8 +6,8 @@ echo " "
 echo "Welcome to Droidian installer"
 echo " "
 
-#set device variable 
-export device=violet
+#set device variable ( deprecated as we are using zenity
+#export device=violet
 
 #-----------------------------------------------------------------------------------------------------------------------
 
@@ -23,12 +23,34 @@ done
 
 #------------------------------------------------------------------------------------------------------------------------
 
+#Gui elments using zenity......
+zenity --info \
+       --window-icon=logo.png \
+       --title "Installer" \
+       --width 500 \
+       --height 300 \
+       --text "Welcome to Droidian installer. please click 'ok' to continue"
+       --ok-label="next"
+       
+device=$(zenity --list \
+                --window-icon=logo.png \
+                --width 500 \
+                --height 300 \
+                --title="Please select your device" \
+                --radiolist --column="selection"  --column="Code Name" --column="Name" \
+                True  violet "Redmi note 7 pro" \
+                False kenzo "Redmi note 3"
+                )
+#Todo: load device details dynamically using from json                
+       
+echo "you have chosen " $device
 echo "would you like to dual boot Droidian along with ubuntu-touch / android (yes or no )"
 echo " "
 echo "if your device is non- a/b (old but has treble) this will flash droidian's boot image to your recovery partition .so booting into recovery will be booting droidian .to get recovery you will have to reflash recovery using 'fastboot flash recovery recovery.img' "
 echo "if your device is a/b (a relatviely newer device) this will write droidian to one of the partitions"
 echo " "
 echo "this is experimental please input 'no' if you dont want to take the risk "
+
 
 read dual_boot
 
