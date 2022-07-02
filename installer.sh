@@ -100,9 +100,18 @@ else
 fi
 
 
-#load device data
-./data-loader.sh
+#load device data handler functions
+. data-loader.sh
 
+#eval $(parse_yaml zconfig.yml "url_")
+
+# moving to a device specific directory. as, the user might like to install droidian on multiple devices
+mkdir $device
+cd $device
+
+eval $(download_device_files)
+
+eval $(process_files)
 
 # actuall install 
 
