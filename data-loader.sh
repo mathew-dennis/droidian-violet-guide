@@ -1,5 +1,28 @@
 #!/bin/bash 
 
+#----------------------------------------------------------------------------------------------
+# this component phraces the yaml from droidian
+# this component is pulled from https://gist.github.com/pkuczynski/8665367
+
+
+parse_yaml() {
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+   sed -ne "s|^\($s\)\($w\)$s:$s\"\(.*\)\"$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+      }
+   }'
+}
+
+#----------------------------------------------------------------------------------------------
+
 if [ $device = violet ]
 then
     adaptation_url=https://github.com/mathew-dennis/droidian-recovery-flashing-adaptation-violet/releases/download/v1.1/droidian-recovery-flashing-adaptation-violet.zip
@@ -18,67 +41,95 @@ else
 fi
 
 
-#download adaption
-wget $adaptation_url
 
 
-# moving to a device specific directory. as, the user might like to install droidian on multiple devices
-mkdir $device
-cd $device
+download_device_files() { 
+    (
+    echo "10" 
+    echo "# downloading adaption" 
+    #download adaption
+    wget $adaptation_url
+    echo "20" 
+    
+    echo "# downloading vendor " 
+    # download vendor 
+    if [ -e vendor.img ]
+    then
+       # maybe check hash
+       echo " "
+    else 
+       wget $vendor_url
+    fi
+    echo "40" 
+    
+    echo "# downloading halium boot"
+    #download halium boot
+    rm -f boot.img
+    wget  $boot_url
+    echo "60"
+    
+    echo "#  download recovery " 
+    # download recovery 
+    if [ -e recovery.img ]
+    then
+       # maybe check hash
+       echo " "
+    else 
+       wget $recovery_url
+    fi 
+    echo "80"
+    
+    echo "# downloading firmware" 
+     # download firmware  
+    if [ -e firmware.zip ]
+    then
+       # maybe check hash
+       echo " "
+    else 
+       wget $firmware_url
+    fi 
+    echo "100"
+    
+    ) |
+    zenity --progress \
+           --window-icon=logo.png \
+           --width 500 \
+           --height 300 \
+           --title="Downloading Device Packages" \
+           --text="Downloading..." \
+           --percentage=0
 
-# download vendor 
-if [ -e vendor.img ]
-then
-   # maybe check hash
-else 
-   wget $vendor_url
-fi
-
-#download halium boot
-rm -f boot.img
-wget  $boot_url
-
-# download recovery 
-if [ -e recovery.img ]
-then
-   # maybe check hash
-else 
-   wget $recovery_url
-fi 
-
-
-# download firmware  
-if [ -e firmware.zip ]
-then
-   # maybe check hash
-else 
-   wget $firmware_url
-fi 
-
-
+    if [ "$?" = -1 ] ; then
+            zenity --error \
+              --text="Download Failed."
+    fi
+}
 #----------------------------------------------------------
-#setting file names for flashing 
 
-#unzip recovery if using orengefox
-unzip OrangeFox*.zip
+process_files() { 
+    #setting file names for flashing 
 
-#rename if using  twrp 
-cp twrp*.img recovery.img
+    #unzip recovery if using orengefox
+    unzip OrangeFox*.zip
+
+    #rename if using  twrp 
+    cp twrp*.img recovery.img
 
 
-#unzip vendor 
-unzip vendor.zip
+    #unzip vendor 
+    unzip vendor.zip
 
-#rename vendor if vendor has big filename 
-cp vendor*.img vendor.img
+    #rename vendor if vendor has big filename 
+    cp vendor*.img vendor.img
 
-#rename adaptation 
-cp *adaptation*.zip adaptation.zip 
+    #rename adaptation 
+    cp *adaptation*.zip adaptation.zip 
 
-#rename firmware
-cp fw_*.zip firmware.zip
+    #rename firmware
+    cp fw_*.zip firmware.zip
 
-#if lineage os itself is given
-cp lineage*.zip lineage.zip
+    #if lineage os itself is given
+    cp lineage*.zip lineage.zip 
+}
 
 #----------------------------------------------------------
