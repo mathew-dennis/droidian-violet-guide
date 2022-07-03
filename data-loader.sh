@@ -1,5 +1,21 @@
 #!/bin/bash 
 
+get_yaml() {
+    rm -Rf yaml ; mkdir yaml; cd yaml
+    wget https://github.com/thomashastings/droidian-devices/archive/refs/heads/main.zip 
+    unzip main.zip
+    cd ..
+
+    for f in yaml/droidian-devices-main/devices/*.yml; do
+      fnew=`echo $f | sed 's/.yml//'`
+      mv $f $fnew
+    done
+    rm -Rf .yaml ; mkdir .yaml; 
+    mv yaml/droidian-devices-main/devices/* .yaml/
+    rm -Rf yaml
+}
+
+
 #----------------------------------------------------------------------------------------------
 # this component phraces the yaml from droidian
 # this component is pulled from https://gist.github.com/pkuczynski/8665367
@@ -23,24 +39,6 @@ parse_yaml() {
 
 #----------------------------------------------------------------------------------------------
 
-if [ $device = violet ]
-then
-    adaptation_url=https://github.com/mathew-dennis/droidian-recovery-flashing-adaptation-violet/releases/download/v1.1/droidian-recovery-flashing-adaptation-violet.zip
-    
-    vendor_url=https://github.com/ubuntu-touch-violet/ubuntu-touch-violet/releases/download/20210510/vendor.zip
-    
-    boot_url=https://gitlab.com/mathew-dennis/xiaomi-violet/-/jobs/2428049402/artifacts/raw/out/boot.img
-    
-    recovery_url=https://us-dl.orangefox.download/61c249bef2082f874065b8a5
-    
-    firmware_url=https://mirrors.gigenet.com/OSDN//storage/g/x/xi/xiaomifirmwareupdater/Stable/V11/violet/fw_violet_miui_VIOLETINGlobal_V11.0.5.0.PFHINXM_04632f47d3_9.0.zip
-    
-else
-    echo "please add urls for your " $device
-    read -p "please re-run the installer after that..."   
-fi
-
-
 
 
 download_device_files() { 
@@ -48,7 +46,7 @@ download_device_files() {
     echo "10" 
     echo "# downloading adaption" 
     #download adaption
-    wget $adaptation_url
+    wget $url_adaptation_link
     echo "20" 
     
     echo "# downloading vendor " 
@@ -58,14 +56,14 @@ download_device_files() {
        # maybe check hash
        echo " "
     else 
-       wget $vendor_url
+       wget $url_vendor_zip_link
     fi
     echo "40" 
     
     echo "# downloading halium boot"
     #download halium boot
     rm -f boot.img
-    wget  $boot_url
+    wget  $url_boot_link
     echo "60"
     
     echo "#  download recovery " 
@@ -75,7 +73,7 @@ download_device_files() {
        # maybe check hash
        echo " "
     else 
-       wget $recovery_url
+       wget $url_recovery_link
     fi 
     echo "80"
     
@@ -86,8 +84,9 @@ download_device_files() {
        # maybe check hash
        echo " "
     else 
-       wget $firmware_url
+       wget $url_android_link
     fi 
+    echo "#download complete please press 'ok' to continue"
     echo "100"
     
     ) |
