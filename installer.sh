@@ -1,6 +1,9 @@
 #!/bin/bash 
 # script by mathew dennis  https://github.com/mathew-dennis
 
+#include device data handler functions
+. data-loader.sh
+
 clear
 echo " "
 echo "Welcome to Droidian installer"
@@ -31,17 +34,20 @@ zenity --info \
        --height 300 \
        --text "Welcome to Droidian installer. please click 'ok' to continue"
        --ok-label="next"
-       
+  
+eval $(get_yaml)
+
 device=$(zenity --list \
                 --window-icon=logo.png \
                 --width 500 \
                 --height 300 \
                 --title="Please select your device" \
                 --radiolist --column="selection"  --column="Code Name" --column="Name" \
-                True  violet "Redmi note 7 pro" \
-                False kenzo "Redmi note 3"
+                True  xiaomi_violet "Redmi note 7 pro" \
+                False xiaomi_kenzo "Redmi note 3"
                 )
-       
+                
+ 
 echo "you have chosen " $device
 echo "would you like to dual boot Droidian along with ubuntu-touch / android (yes or no )"
 echo " "
@@ -54,6 +60,20 @@ echo "this is experimental please input 'no' if you dont want to take the risk "
 #--------------------------------------------------------------------------------------------------------------
 #the following zenity code is pulled from this link
 #https://askubuntu.com/questions/478186/help-creating-a-messagebox-notification-with-yes-no-options-before-an-applicatio
+if zenity --question \
+          --window-icon=logo.png \
+          --width 500 \
+          --height 300 \
+          --text="Would You like to wipe data . this cannot be undone "
+then
+    #zenity --info --text="You pressed \"Yes\"!"
+    wipe_data=yes
+else
+   # zenity --info --text="You pressed \"No\"!"
+    wipe_data=no
+fi
+
+echo "Your choice for wipe data ? is" $wipe_data
 
 if zenity --question \
           --window-icon=logo.png \
@@ -99,11 +119,13 @@ else
    mv rootfs.zip droidian_rootfs.zip
 fi
 
+#parse yaml of the selected device
+eval $(parse_yaml .yaml/$device "url_")
 
-#load device data handler functions
-. data-loader.sh
+#print the download links 
+echo -e vendor: "$url_vendor_zip_link\nadaptation: $url_adaptation_link \n"
+echo -e boot: "$url_boot_link \nrecovery: $url_recovery_link \nfirmware $url_android_link"
 
-#eval $(parse_yaml zconfig.yml "url_")
 
 # moving to a device specific directory. as, the user might like to install droidian on multiple devices
 mkdir $device
@@ -115,11 +137,14 @@ eval $(process_files)
 
 # actuall install 
 
+#step 1-------------------------------------------------------------------------------------------
+#flash recovery and boot to it
+
 echo "installing droidian.."
 echo"please boot your device to fastboot mode by pressing vol- and power button at the same time"
 
 #condition for devices that cant handle fastboot boot command
-if [ $device = violet ]
+if [ $url_recovery_must_flash = True ]
 then
    fastboot flash recovery recovery.img && fastboot reboot
 else
@@ -132,14 +157,34 @@ cd ..
 
 #fix me ..we need a method to check if adb device is connected and the device is $device and continue
 
+
+#step 2------------------------------------------------------------------------------------------------
+#push files and flash them
+# reference 
+#https://forum.xda-developers.com/t/flash-zip-files-from-adb-terminal-and-other-commands.1353234/
+
+adb push droidian-rootfs.zip /data/droidian-rootfs.zip
+adb push adaptation.zip      /data/adaptation.zip
+adb push firmware.zip        /data/firmware.zip
+adb push lineage.zip         /data/lineage.zip 
+
+
+adb shell "echo 'boot-recovery ' > /cache/recovery/command"
+adb shell "echo '--update_package=/data/firmware.zip' >> /cache/recovery/command"
+adb shell "echo '--update_package=/data/lineage.zip' >> /cache/recovery/command"
+adb shell "echo '--update_package=/data/droidian.zip' >> /cache/recovery/command"
+adb shell "echo '--update_package=/data/adaptation.zip' >> /cache/recovery/command"
+
+if [ $wipe_data = yes ]
+then
+ #wipe data 
+else 
+ #do nothing
+
 echo "the device will now reboot to recovery.."
 sleep 3
 read -p "please press 'enter' when device is in recovery"
 
-adb sideload droidian-rootfs.zip
-
-
-adb sideload droidian-recovery-flashing-adaptation-violet.zip
 
 adb reboot bootloader
 
@@ -166,4 +211,3 @@ else
     fastboot flash boot boot.img && fastboot flash recovery recovery.img  && fastboot reboot
     
 echo "all done "
-    
