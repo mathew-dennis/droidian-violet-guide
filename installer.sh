@@ -49,12 +49,12 @@ device=$(zenity --list \
                 
  
 echo "you have chosen " $device
-echo "would you like to dual boot Droidian along with ubuntu-touch / android (yes or no )"
-echo " "
-echo "if your device is non- a/b (old but has treble) this will flash droidian's boot image to your recovery partition .so booting into recovery will be booting droidian .to get recovery you will have to reflash recovery using 'fastboot flash recovery recovery.img' "
-echo "if your device is a/b (a relatviely newer device) this will write droidian to one of the partitions"
-echo " "
-echo "this is experimental please input 'no' if you dont want to take the risk "
+# echo "would you like to dual boot Droidian along with ubuntu-touch / android (yes or no )"
+# echo " "
+# echo "if your device is non- a/b (old but has treble) this will flash droidian's boot image to your recovery partition .so booting into recovery will be booting droidian .to get recovery you will have to reflash recovery using 'fastboot flash recovery recovery.img' "
+# echo "if your device is a/b (a relatviely newer device) this will write droidian to one of the partitions"
+# echo " "
+# echo "this is experimental please input 'no' if you dont want to take the risk "
 
 
 #--------------------------------------------------------------------------------------------------------------
@@ -75,27 +75,44 @@ fi
 
 echo "Your choice for wipe data ? is" $wipe_data
 
-if zenity --question \
-          --window-icon=logo.png \
-          --width 500 \
-          --height 300 \
-          --text="would you like to dual boot Droidian along with ubuntu-touch / android (yes or no ) \n \n  if your device is non- a/b (old but has treble) this will flash droidian's boot image to your recovery partition .so booting into recovery will be booting droidian .to get recovery you will have to reflash recovery using 'fastboot flash recovery recovery.img'"
-then
+# if zenity --question \
+#           --window-icon=logo.png \
+#           --width 500 \
+#           --height 300 \
+#           --text="would you like to dual boot Droidian along with ubuntu-touch / android (yes or no ) \n \n  if your device is non- a/b (old but has treble) this will flash droidian's boot image to your recovery partition .so booting into recovery will be booting droidian .to get recovery you will have to reflash recovery using 'fastboot flash recovery recovery.img'"
+# then
     #zenity --info --text="You pressed \"Yes\"!"
-    dual_boot=yes
-else
+#     dual_boot=yes
+# else
    # zenity --info --text="You pressed \"No\"!"
-    dual_boot=no
-fi
-echo "Your choice for dual boot is" $dual_boot
+#     dual_boot=no
+# fi
+# echo "Your choice for dual boot is" $dual_boot
 
 #depricated as we use zenity
 #read dual_boot
 #------------------------------------------------------------------------------------------------------------------
 
-# downloading rootfs
 
-if [ -e droidian_rootfs.zip ]
+#parse yaml of the selected device
+eval $(parse_yaml .yaml/$device "url_")
+
+
+# downloading rootfs
+api=$url_api_version
+if [api = API28 ]
+ then 
+  url_droidian_rootfs=https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
+  echo " api level is 28, download url= $url_droidian_rootfs "
+else if [api = API29 ]
+ then
+   url_droidian_rootfs=https://images.droidian.org/rootfs-api29gsi-all/nightly/arm64/generic/rootfs.zip
+  echo " api level is 29, download url= $url_droidian_rootfs "
+else 
+  echo "unsupported api level" && exit 0
+fi
+  
+if [ -e droidian_rootfs_$api.zip ]
 then
    if zenity --question \
              --window-icon=logo.png \
@@ -105,9 +122,11 @@ then
    # zenity will return true or false based on user responce ...
    then
       echo "re-downloading rootfs"
-      rm -f rootfs.zip droidian_rootfs.zip
-      wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
-      mv rootfs.zip droidian_rootfs.zip
+      rm -f rootfs.zip droidian_rootfs_$api.zip
+      wget $url_droidian_rootfs
+      # if [$url_droidian_release] then wget $url_droidian_release fi
+      
+      mv rootfs.zip droidian_rootfs_$api.zip
    else
       echo "skipping re-download.. "
    fi
@@ -115,12 +134,12 @@ then
 else
    rm -f rootfs.zip
    echo "downloading rootfs"
-   wget https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
-   mv rootfs.zip droidian_rootfs.zip
+   wget $url_droidian_rootfs
+   #if [$url_droidian_release] then wget $url_droidian_release fi
+   
+   mv rootfs.zip droidian_rootfs_$api.zip
 fi
 
-#parse yaml of the selected device
-eval $(parse_yaml .yaml/$device "url_")
 
 #print the download links 
 echo -e vendor: "$url_vendor_zip_link\nadaptation: $url_adaptation_link \n"
@@ -154,19 +173,48 @@ fi
 #jump back to main folder to install droidian
 cd .. 
 
+#--- verify device is the correct one---------------------------------------------------------
 
-#fix me ..we need a method to check if adb device is connected and the device is $device and continue
+i=0
+while [ true ]
+do
+    hi=$(adb shell getprop ro.product.device)
+    hi2=$url_codename
+    if [ $hi  = $hi2  ] 
+    then
+           echo "$hi = $hi2 ,device found " && break
 
+    else 
+           echo "error: $hi2 not connected "      
+    fi
+    sleep 1 && i++
+    if [i=6000]
+     then 
+        echo "waited too long no device detected " && exit 0
+done
+
+#---- handle device wipe request ----------------------------------------------------------------------
+
+if [ $wipe_data = yes ]
+then
+ #wipe data 
+else 
+ #do nothing
+fi
 
 #step 2------------------------------------------------------------------------------------------------
 #push files and flash them
 # reference 
 #https://forum.xda-developers.com/t/flash-zip-files-from-adb-terminal-and-other-commands.1353234/
 
-adb push droidian-rootfs.zip /data/droidian-rootfs.zip
-adb push adaptation.zip      /data/adaptation.zip
-adb push firmware.zip        /data/firmware.zip
-adb push lineage.zip         /data/lineage.zip 
+adb push droidian_rootfs_$api.zip /data/droidian-rootfs.zip
+
+# going to device directory to push device specific files 
+cd $device
+
+adb push adaptation.zip           /data/adaptation.zip
+adb push firmware.zip             /data/firmware.zip
+adb push lineage.zip              /data/lineage.zip 
 
 
 adb shell "echo 'boot-recovery ' > /cache/recovery/command"
@@ -175,11 +223,7 @@ adb shell "echo '--update_package=/data/lineage.zip' >> /cache/recovery/command"
 adb shell "echo '--update_package=/data/droidian.zip' >> /cache/recovery/command"
 adb shell "echo '--update_package=/data/adaptation.zip' >> /cache/recovery/command"
 
-if [ $wipe_data = yes ]
-then
- #wipe data 
-else 
- #do nothing
+adb reboot recovery
 
 echo "the device will now reboot to recovery.."
 sleep 3
@@ -188,13 +232,11 @@ read -p "please press 'enter' when device is in recovery"
 
 adb reboot bootloader
 
-# going to device directory
-cd $device
 
 if [ -e vendor.img ]
 then 
    #flash it 
-#fix me: add dual boot support for a/b device
+#fix me: add dual boot support for normal and a/b device
 
 if [ $dual_boot = yes ]
 then
