@@ -1,5 +1,14 @@
 #!/bin/bash 
 
+get_yaml2(){
+
+device_yaml=https://raw.githubusercontent.com/droidian-devices/devices.droidian.org/master/data/supported-devices/devices/$device.yml
+echo "device_yaml= "  $device_yaml
+wget $device_yaml
+mv $device.yml .yaml/$device.yml
+
+}
+
 get_yaml() {
     rm -Rf yaml ; mkdir yaml; cd yaml
     wget https://github.com/thomashastings/droidian-devices/archive/refs/heads/main.zip 
@@ -39,8 +48,17 @@ parse_yaml() {
 
 #----------------------------------------------------------------------------------------------
 
+setup_dev_env() {
+ if [  $url_android_filename != null ]
+ then
+  device_use_lineage=yes
+ else 
+  device_use_lineage=no
 
+ fi
 
+}
+#----------------------------------------------------------------------------------------------
 download_device_files() { 
     (
     echo "10" 
@@ -96,7 +114,7 @@ download_device_files() {
            --height 300 \
            --title="Downloading Device Packages" \
            --text="Downloading..." \
-           --percentage=0
+           --auto-close
 
     if [ "$?" = -1 ] ; then
             zenity --error \
@@ -132,3 +150,13 @@ process_files() {
 }
 
 #----------------------------------------------------------
+zenity_worker() {
+ zenity --$1 \
+       --window-icon=logo.png \
+       --title "Installer" \
+       --width 500 \
+       --height 300 \
+       --text "$2"
+       --ok-label="next"
+  }
+#---------------------------------------------------------
