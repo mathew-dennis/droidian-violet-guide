@@ -35,7 +35,6 @@ zenity --info \
        --text "Welcome to Droidian installer. please click 'ok' to continue"
        --ok-label="next"
   
-eval $(get_yaml)
 
 device=$(zenity --list \
                 --window-icon=logo.png \
@@ -93,21 +92,31 @@ echo "Your choice for wipe data ? is" $wipe_data
 #read dual_boot
 #------------------------------------------------------------------------------------------------------------------
 
+#download device yml
+eval $(get_yaml2)
 
 #parse yaml of the selected device
-eval $(parse_yaml .yaml/$device "url_")
+eval $(parse_yaml .yaml/$device.yml "url_")
 
+#setup device enviornment 
+#eval $(setup_dev_env)
+#echo "device use lineage = " $device_use_lineage
 
 # downloading rootfs
 api=$url_api_version
-if [api = API28 ]
+
+echo "device api version is = " $api
+
+if [ $api = API28 ]
  then 
   url_droidian_rootfs=https://images.droidian.org/rootfs-api28gsi-all/nightly/arm64/generic/rootfs.zip
-  echo " api level is 28, download url= $url_droidian_rootfs "
-else if [api = API29 ]
+  echo " api level is 28, download url= " $url_droidian_rootfs 
+  
+elif [ $api = API29 ]
  then
    url_droidian_rootfs=https://images.droidian.org/rootfs-api29gsi-all/nightly/arm64/generic/rootfs.zip
-  echo " api level is 29, download url= $url_droidian_rootfs "
+  echo " api level is 29, download url= " $url_droidian_rootfs 
+  
 else 
   echo "unsupported api level" && exit 0
 fi
@@ -156,13 +165,26 @@ eval $(process_files)
 
 # actuall install 
 
-#step 1-------------------------------------------------------------------------------------------
-#flash recovery and boot to it
-
 echo "installing droidian.."
 echo"please boot your device to fastboot mode by pressing vol- and power button at the same time"
 
-#condition for devices that cant handle fastboot boot command
+# step 0 ----------------------------------------------------------------------------------------------
+# handle device wipe request
+
+if [ $wipe_data = yes ]
+then
+ echo "wipe data"
+ fastboot erase userdata
+else 
+ echo "do not wipe data"
+ #do nothing
+fi
+
+#step 1-------------------------------------------------------------------------------------------
+#flash recovery and boot to Device
+
+
+#condition for devices that can't handle fastboot boot command
 if [ $url_recovery_must_flash = True ]
 then
    fastboot flash recovery recovery.img && fastboot reboot
@@ -191,23 +213,16 @@ do
     if [i=6000]
      then 
         echo "waited too long no device detected " && exit 0
+    fi
 done
 
-#---- handle device wipe request ----------------------------------------------------------------------
-
-if [ $wipe_data = yes ]
-then
- #wipe data 
-else 
- #do nothing
-fi
 
 #step 2------------------------------------------------------------------------------------------------
 #push files and flash them
 # reference 
 #https://forum.xda-developers.com/t/flash-zip-files-from-adb-terminal-and-other-commands.1353234/
 
-adb push droidian_rootfs_$api.zip /data/droidian-rootfs.zip
+adb push droidian_rootfs_$api.zip /data/droidian_rootfs_$api.zip
 
 # going to device directory to push device specific files 
 cd $device
@@ -219,7 +234,13 @@ adb push lineage.zip              /data/lineage.zip
 
 adb shell "echo 'boot-recovery ' > /cache/recovery/command"
 adb shell "echo '--update_package=/data/firmware.zip' >> /cache/recovery/command"
-adb shell "echo '--update_package=/data/lineage.zip' >> /cache/recovery/command"
+
+
+if [ true ] 
+then 
+  adb shell "echo '--update_package=/data/lineage.zip' >> /cache/recovery/command"
+fi
+
 adb shell "echo '--update_package=/data/droidian.zip' >> /cache/recovery/command"
 adb shell "echo '--update_package=/data/adaptation.zip' >> /cache/recovery/command"
 
@@ -238,6 +259,8 @@ then
    #flash it 
 #fix me: add dual boot support for normal and a/b device
 
+dual_boot=no
+
 if [ $dual_boot = yes ]
 then
    if [ -e vendor.img ]
@@ -252,4 +275,4 @@ else
     fi
     fastboot flash boot boot.img && fastboot flash recovery recovery.img  && fastboot reboot
     
-echo "all done "
+echo "all done " && exit 0
