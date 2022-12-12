@@ -18,7 +18,7 @@ echo " "
 #This component is pulled from https://stackoverflow.com/questions/33297857/how-to-check-dependency-in-bash-script
 
 echo -n "Checking dependencies... "
-for name in fastboot adb zenity
+for name in fastboot adb zenity axel
 do
   [[ $(which $name 2>/dev/null) ]] || { echo -en "\n$name needs to be installed. Use 'sudo apt-get install $name'";deps=1; }
 done
@@ -101,7 +101,8 @@ eval $(parse_yaml .yaml/$device.yml "url_")
 #setup device enviornment 
 #eval $(setup_dev_env)
 #echo "device use lineage = " $device_use_lineage
-
+ echo "vendor is recovery flashable = " $url_vendor_zip_is_recovery_flashable
+ 
 # downloading rootfs
 api=$url_api_version
 
@@ -122,7 +123,7 @@ else
 fi
   
 if [ -e droidian_rootfs_$api.zip ]
-then
+ then
    if zenity --question \
              --window-icon=logo.png \
              --width 500 \
@@ -132,7 +133,7 @@ then
    then
       echo "re-downloading rootfs"
       rm -f rootfs.zip droidian_rootfs_$api.zip
-      wget $url_droidian_rootfs
+      axel  -n 16 $url_droidian_rootfs
       # if [$url_droidian_release] then wget $url_droidian_release fi
       
       mv rootfs.zip droidian_rootfs_$api.zip
@@ -143,7 +144,7 @@ then
 else
    rm -f rootfs.zip
    echo "downloading rootfs"
-   wget $url_droidian_rootfs
+   axel -n 16 $url_droidian_rootfs
    #if [$url_droidian_release] then wget $url_droidian_release fi
    
    mv rootfs.zip droidian_rootfs_$api.zip
@@ -166,7 +167,7 @@ eval $(process_files)
 # actuall install 
 
 echo "installing droidian.."
-echo"please boot your device to fastboot mode by pressing vol- and power button at the same time"
+echo "please boot your device to fastboot mode by pressing vol- and power button at the same time"
 
 # step 0 ----------------------------------------------------------------------------------------------
 # handle device wipe request
@@ -179,18 +180,27 @@ else
  echo "do not wipe data"
  #do nothing
 fi
+#------------------------------------------------------------------------------------------------
+#fix me ;; we need to verify fastboot device is the correct one.
+
+
+
+
 
 #step 1-------------------------------------------------------------------------------------------
 #flash recovery and boot to Device
 
 
 #condition for devices that can't handle fastboot boot command
-if [ $url_recovery_must_flash = True ]
+if [ $url_recovery_must_flash = true ]
 then
-   fastboot flash recovery recovery.img && fastboot reboot
+   #This is not a mistake, Its by design.
+   fastboot flash boot recovery.img 
+   fastboot reboot
 else
    fastboot boot recovery.img
 fi
+
 
 #jump back to main folder to install droidian
 cd .. 
@@ -207,14 +217,18 @@ do
            echo "$hi = $hi2 ,device found " && break
 
     else 
-           echo "error: $hi2 not connected "      
+           echo "Device $hi2 not connected. Attempt $i "    
     fi
-    sleep 1 && i++
-    if [i=6000]
+    sleep 1 && i=`expr $i + 1`
+
+    if [ i = 600 ]
      then 
         echo "waited too long no device detected " && exit 0
     fi
 done
+
+# waiting for device to get ready
+sleep 10
 
 
 #step 2------------------------------------------------------------------------------------------------
@@ -223,7 +237,7 @@ done
 #https://forum.xda-developers.com/t/flash-zip-files-from-adb-terminal-and-other-commands.1353234/
 
 adb push droidian_rootfs_$api.zip /data/droidian_rootfs_$api.zip
-
+adb push reboot_packet.zip        /data/reboot_packet.zip
 # going to device directory to push device specific files 
 cd $device
 
@@ -236,23 +250,18 @@ adb shell "echo 'boot-recovery ' > /cache/recovery/command"
 adb shell "echo '--update_package=/data/firmware.zip' >> /cache/recovery/command"
 
 
-if [ true ] 
-then 
-  adb shell "echo '--update_package=/data/lineage.zip' >> /cache/recovery/command"
-fi
+#if [ true ] 
+#then 
+#  adb shell "echo '--update_package=/data/lineage.zip' >> /cache/recovery/command"
+#fi
 
-adb shell "echo '--update_package=/data/droidian.zip' >> /cache/recovery/command"
+adb shell "echo '--update_package=/data/droidian_rootfs_$api.zip' >> /cache/recovery/command"
 adb shell "echo '--update_package=/data/adaptation.zip' >> /cache/recovery/command"
+adb shell "echo '--update_package=/data/reboot_packet.zip' >> /cache/recovery/command"
 
 adb reboot recovery
 
-echo "the device will now reboot to recovery.."
-sleep 3
-read -p "please press 'enter' when device is in recovery"
-
-
-adb reboot bootloader
-
+#The reboot_packet will make the device reboot to bootloader 
 
 if [ -e vendor.img ]
 then 
@@ -261,18 +270,17 @@ then
 
 dual_boot=no
 
-if [ $dual_boot = yes ]
-then
-   if [ -e vendor.img ]
-   then
-      adb push vendor.img /data/vendor.img
-   fi
-   fastboot flash recovery boot.img && fastboot reboot
+ if [ $dual_boot = yes ]
+ then
+    adb push vendor.img /data/vendor.img
+ fi
+
 else 
-    if [ -e vendor.img ]
-    then
-       fastboot flash vendor  vendor.img
-    fi
-    fastboot flash boot boot.img && fastboot flash recovery recovery.img  && fastboot reboot
-    
+ fastboot flash vendor  vendor.img
+fi
+ 
+fastboot flash boot boot.img && fastboot flash recovery recovery.img  && fastboot reboot
+  
+eval $(zenity_worker info "Flashing done!" "Installer has sucessfully flashed Droidian on $device. Have fun ;) " )
+
 echo "all done " && exit 0
