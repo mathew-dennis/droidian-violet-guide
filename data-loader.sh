@@ -4,6 +4,8 @@ get_yaml2(){
 
 device_yaml=https://raw.githubusercontent.com/droidian-devices/devices.droidian.org/master/data/supported-devices/devices/$device.yml
 echo "device_yaml= "  $device_yaml
+rm $device_yaml .yaml/$device.yml
+mkdir .yaml
 wget $device_yaml
 mv $device.yml .yaml/$device.yml
 
@@ -51,12 +53,17 @@ parse_yaml() {
 setup_dev_env() {
  if [  $url_android_filename != null ]
  then
-  device_use_lineage=yes
+  device_use_lineage=true
  else 
-  device_use_lineage=no
-
+  device_use_lineage=false
  fi
-
+ 
+ if  [  $url_vendor_image_filename != null ]
+ then
+  device_use_direct_vendor_image=true
+ else 
+  device_use_direct_vendor_image=false
+ fi
 }
 #----------------------------------------------------------------------------------------------
 download_device_files() { 
@@ -64,24 +71,27 @@ download_device_files() {
     echo "10" 
     echo "# downloading adaption" 
     #download adaption
-    wget $url_adaptation_link
+    wget $url_adaptation_direct_download_link
     echo "20" 
     
     echo "# downloading vendor " 
     # download vendor 
-    if [ -e vendor.img ]
+    if [ -e vendor.img ] || [ -e vendor.zip ]
     then
        # maybe check hash
        echo " "
     else 
-       wget $url_vendor_zip_link
+       #https://askubuntu.com/questions/214018/how-to-make-wget-faster-or-multithreading
+       echo "initializing vendor download"
+       axel -n 4 $url_vendor_zip_direct_download_link
+       axel -n 4 $url_vendor_image_direct_download_link
     fi
     echo "40" 
     
     echo "# downloading halium boot"
     #download halium boot
     rm -f boot.img
-    wget  $url_boot_link
+    wget  $url_boot_direct_download_link
     echo "60"
     
     echo "#  download recovery " 
@@ -91,7 +101,7 @@ download_device_files() {
        # maybe check hash
        echo " "
     else 
-       wget $url_recovery_link
+       wget $url_recovery_direct_download_link
     fi 
     echo "80"
     
@@ -102,7 +112,7 @@ download_device_files() {
        # maybe check hash
        echo " "
     else 
-       wget $url_android_link
+       wget $url_firmware_direct_download_link
     fi 
     echo "#download complete please press 'ok' to continue"
     echo "100"
@@ -126,37 +136,49 @@ download_device_files() {
 process_files() { 
     #setting file names for flashing 
 
-    #unzip recovery if using orengefox
-    unzip OrangeFox*.zip
+    #unzip recovery if using orangefox
+    
+    mkdir temp
+    unzip -d temp OrangeFox*.zip
+    mv /temp/recovery.img recovery.img
+    rm -Rf temp
 
-    #rename if using  twrp 
+    #rename if using  TWRP 
     cp twrp*.img recovery.img
 
 
-    #unzip vendor 
-    unzip vendor.zip
-
-    #rename vendor if vendor has big filename 
-    cp vendor*.img vendor.img
-
+    #handle and rename vendor
+     
+    cp $url_vendor_zip_filename vendor.zip
+    cp $url_vendor_image_filename vendor.img
+    
+    if [ $url_vendor_zip_is_recovery_flashable = true ] || [ -e vendor.img ]
+     then 
+      echo " "
+    else 
+      unzip vendor.zip
+      mv vendor*.img vendor.img
+    fi
+    
     #rename adaptation 
-    cp *adaptation*.zip adaptation.zip 
+    cp $url_adaptation_filename adaptation.zip 
 
     #rename firmware
-    cp fw_*.zip firmware.zip
+    cp $url_firmware_filename firmware.zip
 
-    #if lineage os itself is given
+    #if lineage OS itself is given
     cp lineage*.zip lineage.zip 
 }
 
 #----------------------------------------------------------
+#usage eval ($zenity_worker type "title" "text" )
+# accepted types >> info warning error
 zenity_worker() {
  zenity --$1 \
        --window-icon=logo.png \
-       --title "Installer" \
+       --title "$2" \
        --width 500 \
        --height 300 \
-       --text "$2"
-       --ok-label="next"
+       --text "$3"
   }
 #---------------------------------------------------------
